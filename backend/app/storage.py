@@ -33,7 +33,10 @@ def ensure_dirs() -> None:
 def database_url() -> str:
     url = os.getenv("DATABASE_URL")
     if url:
-        return url.replace("postgres://", "postgresql+psycopg://", 1) if url.startswith("postgres://") else url
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
     ensure_dirs()
     return f"sqlite:///{DATA_DIR / 'taper.db'}"
 
