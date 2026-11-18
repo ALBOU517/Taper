@@ -1,0 +1,49 @@
+{
+ "name": "68 y/o: strength, balance and mobility at home, weekday mornings",
+ "story": "Retired. 45 min Mon–Fri mornings. Light dumbbells, bands, stability ball.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym",
+   "mobility",
+   "walk"
+  ],
+  "block_weeks": 24,
+  "level": "beginner",
+  "baseline_hours": 2,
+  "gym_per_week": 2,
+  "equipment": "home"
+ },
+ "availability": {
+  "mon": 45,
+  "tue": 45,
+  "wed": 45,
+  "thu": 45,
+  "fri": 45,
+  "sat": 0,
+  "sun": 0
+ },
+ "body": {
+  "sex": "female",
+  "age": 68,
+  "height_cm": 160,
+  "weight_kg": 64
+ },
+ "expect": {
+  "sports": [
+   "gym",
+   "mobility",
+   "walk"
+  ],
+  "equipment": "home",
+  "gym_per_week": [
+   2,
+   2
+  ],
+  "no_sessions_on": [
+   "sat",
+   "sun"
+  ],
+  "max_skipped_sessions": 2
+ }
+}

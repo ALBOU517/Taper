@@ -1,0 +1,53 @@
+{
+ "name": "Hardgainer: +7 kg in 20 weeks, 4 × 60 min, minimal cardio",
+ "story": "20 y/o student, 62 kg. Mon/Tue/Thu/Fri 60 min. Upper/lower split.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym"
+  ],
+  "body_focus": true,
+  "block_weeks": 20,
+  "level": "intermediate",
+  "baseline_hours": 3,
+  "gym_per_week": 4
+ },
+ "levels": {
+  "gym": 2
+ },
+ "availability": {
+  "mon": 60,
+  "tue": 60,
+  "wed": 0,
+  "thu": 60,
+  "fri": 60,
+  "sat": 0,
+  "sun": 0
+ },
+ "body": {
+  "sex": "male",
+  "age": 20,
+  "height_cm": 178,
+  "weight_kg": 62
+ },
+ "nutrition": {
+  "mode": "gain",
+  "goal_weight_kg": 69,
+  "goal_weeks": 20
+ },
+ "expect": {
+  "sports": [
+   "gym"
+  ],
+  "gym_per_week": [
+   4,
+   4
+  ],
+  "weekly_rate_pct": [
+   0.5,
+   0.5
+  ],
+  "rate_capped": true,
+  "max_skipped_sessions": 0
+ }
+}

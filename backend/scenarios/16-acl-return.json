@@ -1,0 +1,51 @@
+{
+ "name": "Soccer player, 6 months post-ACL: 16 weeks with the physio's program",
+ "story": "25 y/o, cleared by physio. Tue/Thu/Sat/Sun 60 min. Gym, stationary bike. No running until the physio says so.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym",
+   "bike"
+  ],
+  "block_weeks": 16,
+  "level": "intermediate",
+  "baseline_hours": 3,
+  "gym_per_week": 2
+ },
+ "levels": {
+  "gym": 2,
+  "bike": 1
+ },
+ "routines": [
+  {
+   "name": "Physio program A",
+   "minutes": 50,
+   "dsl": "Gym: Single-Leg Leg Press 3x10 @ RPE 6 | Eccentric Leg Extension 3x8 @ RPE 6 | Balance Board 3x30s | Superset: Glute Bridge 3x12 + Side Plank 3x30s"
+  },
+  {
+   "name": "Physio program B",
+   "minutes": 50,
+   "dsl": "Gym: Step-downs 3x10 @ RPE 6 | Hamstring Curl 3x10 @ RPE 6 | Single-Leg Balance 3x30s | Superset: Calf Raises 3x15 + Dead Bug 3x10"
+  }
+ ],
+ "availability": {
+  "mon": 0,
+  "tue": 60,
+  "wed": 0,
+  "thu": 60,
+  "fri": 0,
+  "sat": 60,
+  "sun": 60
+ },
+ "expect": {
+  "sports": [
+   "bike",
+   "gym"
+  ],
+  "gym_per_week": [
+   2,
+   2
+  ],
+  "max_skipped_sessions": 2
+ }
+}

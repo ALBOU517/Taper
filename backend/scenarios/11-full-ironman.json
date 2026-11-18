@@ -1,0 +1,45 @@
+{
+ "name": "Full Ironman in 32 weeks, 6 days a week with a 6-hour Saturday",
+ "story": "34 y/o endurance athlete. 5 am starts and lunch hours, huge Saturday block. Deload every 4th week.",
+ "goal": {
+  "event": "ironman",
+  "race_in_weeks": 32,
+  "sports": [
+   "swim",
+   "bike",
+   "run"
+  ],
+  "level": "advanced",
+  "baseline_hours": 10
+ },
+ "levels": {
+  "swim": 3,
+  "bike": 3,
+  "run": 4
+ },
+ "availability": {
+  "mon": 0,
+  "tue": 120,
+  "wed": 90,
+  "thu": 120,
+  "fri": 60,
+  "sat": 360,
+  "sun": 150
+ },
+ "expect": {
+  "sports": [
+   "bike",
+   "run",
+   "swim"
+  ],
+  "has_taper": true,
+  "deload_every": 4,
+  "max_skipped_sessions": 4,
+  "longest_session_min": {
+   "bike": [
+    240,
+    370
+   ]
+  }
+ }
+}

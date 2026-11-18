@@ -1,0 +1,10 @@
+{
+  "name": "Never ran → half marathon in 8 months",
+  "story": "Has never run. Wants to finish a half marathon 34 weeks from now. Some gym.",
+  "goal": {"event": "half_marathon", "race_in_weeks": 34, "sports": ["run", "gym"], "level": "beginner",
+           "baseline_hours": 2, "gym_per_week": 2},
+  "availability": {"mon": 60, "tue": 60, "wed": 60, "thu": 60, "fri": 0, "sat": 90, "sun": 120},
+  "levels": {"run": 0, "gym": 1},
+  "expect": {"first_runs_are_walk_run": true, "max_runs_first_week": 3, "beginner_rest_days": true,
+             "longest_run_min": [90, 150], "on_track": true}
+}

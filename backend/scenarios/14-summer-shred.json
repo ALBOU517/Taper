@@ -1,0 +1,55 @@
+{
+ "name": "Student: aggressive 8-week cut, 5 × 60 min gym + daily steps",
+ "story": "21 y/o, 80 kg, wants 72 kg in 8 weeks. Full gym.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym",
+   "walk"
+  ],
+  "body_focus": true,
+  "block_weeks": 8,
+  "level": "intermediate",
+  "baseline_hours": 4,
+  "gym_per_week": 4
+ },
+ "levels": {
+  "gym": 2
+ },
+ "availability": {
+  "mon": 60,
+  "tue": 60,
+  "wed": 60,
+  "thu": 60,
+  "fri": 60,
+  "sat": 0,
+  "sun": 0
+ },
+ "body": {
+  "sex": "male",
+  "age": 21,
+  "height_cm": 178,
+  "weight_kg": 80
+ },
+ "nutrition": {
+  "mode": "lose",
+  "goal_weight_kg": 72,
+  "goal_weeks": 8
+ },
+ "expect": {
+  "sports": [
+   "gym",
+   "walk"
+  ],
+  "gym_per_week": [
+   3,
+   4
+  ],
+  "weekly_rate_pct": [
+   -1.0,
+   -1.0
+  ],
+  "rate_capped": true,
+  "max_skipped_sessions": 2
+ }
+}

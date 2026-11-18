@@ -1,0 +1,11 @@
+{
+  "name": "Alexandre: 88 → 78 kg in 24 weeks, gym-led with light cardio",
+  "story": "23 y/o. Free Mon–Thu 18:30–20:00 and Saturday 9–11. Wants 4 gym days plus low-intensity cardio (incline walk).",
+  "goal": {"event": "custom", "sports": ["gym", "walk"], "body_focus": true, "block_weeks": 24, "level": "beginner",
+           "baseline_hours": 3, "gym_per_week": 4},
+  "availability": {"mon": 90, "tue": 90, "wed": 90, "thu": 90, "fri": 0, "sat": 120, "sun": 0},
+  "body": {"sex": "male", "age": 23, "height_cm": 180, "weight_kg": 88},
+  "nutrition": {"mode": "lose", "goal_weight_kg": 78, "goal_weeks": 24},
+  "expect": {"sports": ["gym", "walk"], "gym_per_week": [3, 4], "no_sessions_on": ["fri", "sun"],
+             "max_skipped_sessions": 2, "weekly_deficit_kcal": [2800, 3600]}
+}

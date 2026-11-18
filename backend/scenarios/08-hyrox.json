@@ -1,0 +1,39 @@
+{
+ "name": "Hyrox in 20 weeks: running + functional strength",
+ "story": "29 y/o. Early Tue/Thu (60 min), Mon/Wed lunch (45 min), Saturday long (2 h). Gym and track.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "run",
+   "gym"
+  ],
+  "block_weeks": 20,
+  "level": "intermediate",
+  "baseline_hours": 5,
+  "gym_per_week": 2
+ },
+ "levels": {
+  "run": 3,
+  "gym": 2
+ },
+ "availability": {
+  "mon": 45,
+  "tue": 60,
+  "wed": 45,
+  "thu": 60,
+  "fri": 0,
+  "sat": 120,
+  "sun": 0
+ },
+ "expect": {
+  "sports": [
+   "gym",
+   "run"
+  ],
+  "gym_per_week": [
+   2,
+   2
+  ],
+  "max_skipped_sessions": 2
+ }
+}

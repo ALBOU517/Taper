@@ -1,0 +1,34 @@
+{
+ "name": "Couch to 5K in 9 weeks, 30 minutes Tue/Thu/Sun",
+ "story": "38 y/o office worker, hasn't run since high school.",
+ "goal": {
+  "event": "5k",
+  "race_in_weeks": 9,
+  "sports": [
+   "run"
+  ],
+  "level": "beginner",
+  "baseline_hours": 0.5
+ },
+ "levels": {
+  "run": 0
+ },
+ "availability": {
+  "mon": 0,
+  "tue": 30,
+  "wed": 0,
+  "thu": 30,
+  "fri": 0,
+  "sat": 0,
+  "sun": 30
+ },
+ "expect": {
+  "sports": [
+   "run"
+  ],
+  "beginner_rest_days": true,
+  "first_runs_are_walk_run": true,
+  "max_runs_first_week": 3,
+  "on_track": true
+ }
+}

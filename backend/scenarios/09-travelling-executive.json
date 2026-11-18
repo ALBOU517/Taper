@@ -1,0 +1,49 @@
+{
+ "name": "Consultant on the road Tue–Thu: keep fitness and muscle for 24 weeks",
+ "story": "42 y/o. Home weekends, hotels Tue–Thu with poor or no gym. 45 min weekdays, 90 min weekends.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "run",
+   "gym"
+  ],
+  "block_weeks": 24,
+  "level": "intermediate",
+  "baseline_hours": 3,
+  "gym_per_week": 3,
+  "away_days": [
+   "tue",
+   "wed",
+   "thu"
+  ]
+ },
+ "levels": {
+  "run": 3,
+  "gym": 2
+ },
+ "availability": {
+  "mon": 45,
+  "tue": 45,
+  "wed": 45,
+  "thu": 45,
+  "fri": 45,
+  "sat": 90,
+  "sun": 90
+ },
+ "expect": {
+  "sports": [
+   "gym",
+   "run"
+  ],
+  "no_equipment_on": [
+   "tue",
+   "wed",
+   "thu"
+  ],
+  "gym_per_week": [
+   2,
+   3
+  ],
+  "max_skipped_sessions": 2
+ }
+}

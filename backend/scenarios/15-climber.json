@@ -1,0 +1,57 @@
+{
+ "name": "Boulderer: 14 weeks of off-wall training around climbing days",
+ "story": "27 y/o. Climbs Tue/Thu/Sun (2 h, hard). Off-wall slots Mon and Wed evenings, 45 min.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym"
+  ],
+  "block_weeks": 14,
+  "level": "intermediate",
+  "baseline_hours": 6,
+  "gym_per_week": 2,
+  "commitments": [
+   {
+    "day": "tue",
+    "minutes": 120,
+    "name": "Climbing",
+    "hard": true
+   },
+   {
+    "day": "thu",
+    "minutes": 120,
+    "name": "Climbing",
+    "hard": true
+   },
+   {
+    "day": "sun",
+    "minutes": 120,
+    "name": "Climbing",
+    "hard": true
+   }
+  ]
+ },
+ "levels": {
+  "gym": 2
+ },
+ "availability": {
+  "mon": 45,
+  "tue": 0,
+  "wed": 45,
+  "thu": 0,
+  "fri": 0,
+  "sat": 0,
+  "sun": 0
+ },
+ "expect": {
+  "sports": [
+   "gym"
+  ],
+  "gym_per_week": [
+   2,
+   2
+  ],
+  "respects_commitments": true,
+  "max_skipped_sessions": 0
+ }
+}

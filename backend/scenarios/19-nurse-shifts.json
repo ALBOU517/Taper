@@ -1,0 +1,42 @@
+{
+ "name": "Nurse on rotating 12-hour shifts (2 days, 2 off, 2 nights, 3 off)",
+ "story": "31 y/o. Shift calendar imported monthly. No hard training the day after a night shift.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "run",
+   "gym"
+  ],
+  "block_weeks": 12,
+  "level": "intermediate",
+  "baseline_hours": 3,
+  "gym_per_week": 2
+ },
+ "levels": {
+  "run": 3,
+  "gym": 2
+ },
+ "shifts": {
+  "pattern": "DDOONNOOO",
+  "off_min": 90,
+  "before_night_min": 60,
+  "after_night_min": 60
+ },
+ "availability": {
+  "mon": 90,
+  "tue": 90,
+  "wed": 90,
+  "thu": 90,
+  "fri": 90,
+  "sat": 90,
+  "sun": 90
+ },
+ "expect": {
+  "sports": [
+   "gym",
+   "run"
+  ],
+  "easy_after_night_shifts": true,
+  "max_skipped_sessions": 6
+ }
+}

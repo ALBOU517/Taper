@@ -1,0 +1,33 @@
+# One-command self-hosting:  cp .env.example .env && docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: taper
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taper}
+      POSTGRES_DB: taper
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taper"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql+psycopg://taper:${POSTGRES_PASSWORD:-taper}@db:5432/taper
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8000}
+      STRAVA_CLIENT_ID: ${STRAVA_CLIENT_ID:-}
+      STRAVA_CLIENT_SECRET: ${STRAVA_CLIENT_SECRET:-}
+      STRAVA_VERIFY_TOKEN: ${STRAVA_VERIFY_TOKEN:-taper-verify}
+      USDA_API_KEY: ${USDA_API_KEY:-DEMO_KEY}
+      OFF_CONTACT: ${OFF_CONTACT:-taper-app}
+      DEMO_MODE: ${DEMO_MODE:-0}
+    ports: ["8000:8000"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:

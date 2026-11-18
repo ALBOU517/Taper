@@ -1,0 +1,11 @@
+{
+  "name": "Julien: first half marathon in 16 weeks, under 1:45",
+  "story": "28 y/o, runs already. Free Tue/Thu 6:00, Wednesday evening and weekend mornings. Wants 2 gym days.",
+  "goal": {"event": "half_marathon", "race_in_weeks": 16, "sports": ["run", "gym"], "target_time": "1:45:00",
+           "level": "intermediate", "baseline_hours": 4, "gym_per_week": 2},
+  "availability": {"mon": 0, "tue": 60, "wed": 75, "thu": 60, "fri": 0, "sat": 120, "sun": 120},
+  "levels": {"run": 4, "gym": 1},
+  "thresholds": {"run_threshold_pace": 290},
+  "expect": {"sports": ["run", "gym"], "gym_per_week": [1, 2], "long_run_alone": true, "has_taper": true,
+             "longest_run_min": [100, 140], "target_realistic": true, "on_track": true}
+}

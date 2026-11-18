@@ -1,0 +1,64 @@
+{
+ "name": "Powerlifter: 12-week block, own squat/bench/deadlift program, zero cardio",
+ "story": "26 y/o. Mon/Wed/Fri evenings 90 min, Sunday 2 h. Full gym. Runs their own program (entered as routines).",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym"
+  ],
+  "block_weeks": 12,
+  "level": "advanced",
+  "baseline_hours": 5,
+  "gym_per_week": 4
+ },
+ "levels": {
+  "gym": 3
+ },
+ "routines": [
+  {
+   "name": "Squat day",
+   "minutes": 85,
+   "dsl": "Gym: Back Squat 5x3 @ RPE 8 | Pause Squat 3x4 @ RPE 7 | Superset: Leg Curl 3x10 + Hanging Leg Raises 3x12"
+  },
+  {
+   "name": "Bench day",
+   "minutes": 80,
+   "dsl": "Gym: Bench Press 5x3 @ RPE 8 | Close-Grip Bench 3x6 @ RPE 7 | Superset: Barbell Row 4x8 + Face Pulls 3x15"
+  },
+  {
+   "name": "Deadlift day",
+   "minutes": 85,
+   "dsl": "Gym: Deadlift 5x2 @ RPE 8 | Deficit Deadlift 3x4 @ RPE 7 | Superset: Pull-ups 3x8 + Ab Wheel 3x10"
+  },
+  {
+   "name": "Accessories & weak points",
+   "minutes": 100,
+   "dsl": "Gym: Overhead Press 4x6 @ RPE 7 | Superset: Dumbbell Row 3x10 + Dips 3x10 | Superset: Back Extension 3x12 + Plank Hold 3x1"
+  }
+ ],
+ "availability": {
+  "mon": 90,
+  "tue": 0,
+  "wed": 90,
+  "thu": 0,
+  "fri": 90,
+  "sat": 0,
+  "sun": 120
+ },
+ "expect": {
+  "sports": [
+   "gym"
+  ],
+  "gym_per_week": [
+   4,
+   4
+  ],
+  "deload_keeps_sessions": true,
+  "max_skipped_sessions": 0,
+  "no_sessions_on": [
+   "tue",
+   "thu",
+   "sat"
+  ]
+ }
+}

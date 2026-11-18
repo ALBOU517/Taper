@@ -1,0 +1,9 @@
+{
+  "name": "Sarah: first Olympic triathlon in 20 weeks",
+  "story": "30 y/o. Tue/Thu mornings before work, Wednesday evening, weekend mornings. Levels unknown.",
+  "goal": {"event": "olympic_tri", "race_in_weeks": 20, "sports": ["swim", "bike", "run"], "level": "beginner",
+           "baseline_hours": 4, "gym_per_week": 0},
+  "availability": {"mon": 0, "tue": 60, "wed": 75, "thu": 60, "fri": 0, "sat": 150, "sun": 150},
+  "expect": {"sports": ["swim", "bike", "run"], "level_checks_first": ["swim", "bike", "run"], "has_taper": true,
+             "on_track": true, "max_skipped_sessions": 6}
+}

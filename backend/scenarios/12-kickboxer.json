@@ -1,0 +1,56 @@
+{
+ "name": "Kickboxer: 10-week S&C block around Mon/Wed/Fri fight training",
+ "story": "24 y/o. Sparring Mon/Wed/Fri evenings (90 min, hard). S&C Tue/Thu mornings 45 min and Saturday.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym",
+   "run"
+  ],
+  "block_weeks": 10,
+  "level": "intermediate",
+  "baseline_hours": 6,
+  "gym_per_week": 3,
+  "commitments": [
+   {
+    "day": "mon",
+    "minutes": 90,
+    "name": "Kickboxing",
+    "hard": true
+   },
+   {
+    "day": "wed",
+    "minutes": 90,
+    "name": "Kickboxing",
+    "hard": true
+   },
+   {
+    "day": "fri",
+    "minutes": 90,
+    "name": "Kickboxing",
+    "hard": true
+   }
+  ]
+ },
+ "levels": {
+  "run": 3,
+  "gym": 2
+ },
+ "availability": {
+  "mon": 0,
+  "tue": 45,
+  "wed": 0,
+  "thu": 45,
+  "fri": 0,
+  "sat": 90,
+  "sun": 0
+ },
+ "expect": {
+  "sports": [
+   "gym",
+   "run"
+  ],
+  "respects_commitments": true,
+  "max_skipped_sessions": 2
+ }
+}

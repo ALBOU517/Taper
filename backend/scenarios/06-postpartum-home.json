@@ -1,0 +1,49 @@
+{
+ "name": "Postpartum rebuild: 16 weeks, home equipment, 30-min nap windows",
+ "story": "32 y/o mother. 30 min Mon/Wed/Fri during naps, stroller walks on weekends. Bands, light dumbbells, mat. Cleared to exercise.",
+ "goal": {
+  "event": "custom",
+  "sports": [
+   "gym",
+   "mobility",
+   "walk"
+  ],
+  "block_weeks": 16,
+  "level": "beginner",
+  "baseline_hours": 1,
+  "gym_per_week": 2,
+  "equipment": "home"
+ },
+ "availability": {
+  "mon": 30,
+  "tue": 0,
+  "wed": 30,
+  "thu": 0,
+  "fri": 30,
+  "sat": 60,
+  "sun": 60
+ },
+ "body": {
+  "sex": "female",
+  "age": 32,
+  "height_cm": 165,
+  "weight_kg": 68
+ },
+ "expect": {
+  "sports": [
+   "gym",
+   "mobility",
+   "walk"
+  ],
+  "equipment": "home",
+  "gym_per_week": [
+   2,
+   2
+  ],
+  "no_sessions_on": [
+   "tue",
+   "thu"
+  ],
+  "max_skipped_sessions": 3
+ }
+}

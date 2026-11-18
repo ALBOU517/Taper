@@ -1,0 +1,39 @@
+{
+ "name": "Gran fondo (160 km) in 24 weeks",
+ "story": "40 y/o. 60-min trainer sessions Tue/Thu mornings, long rides Sat/Sun mornings.",
+ "goal": {
+  "event": "gran_fondo",
+  "race_in_weeks": 24,
+  "sports": [
+   "bike"
+  ],
+  "level": "intermediate",
+  "baseline_hours": 5
+ },
+ "levels": {
+  "bike": 2
+ },
+ "availability": {
+  "mon": 0,
+  "tue": 60,
+  "wed": 0,
+  "thu": 60,
+  "fri": 0,
+  "sat": 240,
+  "sun": 180
+ },
+ "expect": {
+  "sports": [
+   "bike"
+  ],
+  "has_taper": true,
+  "longest_session_min": {
+   "bike": [
+    180,
+    300
+   ]
+  },
+  "max_skipped_sessions": 2,
+  "on_track": true
+ }
+}
