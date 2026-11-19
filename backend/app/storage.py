@@ -14,6 +14,7 @@ than the newest 30.
 from __future__ import annotations
 
 import os
+import re
 import secrets
 import shutil
 import sqlite3
@@ -33,10 +34,14 @@ def ensure_dirs() -> None:
 def database_url() -> str:
     url = os.getenv("DATABASE_URL")
     if url:
+        # Tolerate what hosting dashboards copy: DATABASE_URL='postgresql://...', psql '...', quotes.
+        found = re.search(r"postgres(?:ql)?(?:\+\w+)?://[^\s'\"]+", url)
+        if found:
+            url = found.group(0)
         for prefix in ("postgres://", "postgresql://"):
             if url.startswith(prefix):
                 return "postgresql+psycopg://" + url[len(prefix):]
-        return url
+        return url.strip().strip("'\"")
     ensure_dirs()
     return f"sqlite:///{DATA_DIR / 'taper.db'}"
 
