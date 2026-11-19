@@ -41,7 +41,13 @@ def database_url() -> str:
         for prefix in ("postgres://", "postgresql://"):
             if url.startswith(prefix):
                 return "postgresql+psycopg://" + url[len(prefix):]
-        return url.strip().strip("'\"")
+        url = url.strip().strip("'\"")
+        if "://" not in url:
+            raise RuntimeError(
+                f"DATABASE_URL is not a database address (length {len(url)}, starts with {url[:8]!r}). "
+                "Expected something like postgresql://user:password@host/dbname"
+            )
+        return url
     ensure_dirs()
     return f"sqlite:///{DATA_DIR / 'taper.db'}"
 
