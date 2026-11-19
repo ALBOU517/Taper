@@ -1,8 +1,21 @@
 # Taper
 
+[![Live demo](https://img.shields.io/badge/live%20demo-taper--rpfr.onrender.com-e8590c?style=for-the-badge)](https://taper-rpfr.onrender.com)
+[![CI](https://github.com/ALBOU517/Taper/actions/workflows/ci.yml/badge.svg)](https://github.com/ALBOU517/Taper/actions)
+![Python](https://img.shields.io/badge/python-3.12-3776ab) ![License](https://img.shields.io/badge/license-MIT-green)
+
+### 👉 [Try it live: taper-rpfr.onrender.com](https://taper-rpfr.onrender.com)
+
+Create a free account (no credit card, takes a minute) and the setup wizard builds you a plan.
+It's a small free demo server: if nobody has used it for a while, the **first load can take up to a minute** to wake up. Please don't enter anything you consider private; to keep your data on your own machine, [run it yourself](#quick-start).
+
 **The planner for hybrid athletes: train for the race, eat for the training.** Pick a race and a date. Taper builds the whole season *backwards from the finish line*, fits every session into the free time in your real calendar (classes, shifts, exams), and tells you each day how much to eat (calories, protein, carbs, fat) for the training you're about to do, plus when to eat it. Food logging uses public nutrition databases, so you don't need a separate calorie app.
 
 ![Today view](docs/screenshots/today.png)
+
+| Pick only the sports you do | Dark theme, week view | Short on time? Change a session |
+|---|---|---|
+| ![Wizard](docs/screenshots/wizard-sports.png) | ![Week](docs/screenshots/week-dark.png) | ![Adapt](docs/screenshots/adapt-session.png) |
 
 > Half marathon, marathon, 5K/10K, sprint/Olympic triathlon, 70.3, Ironman, or an open-ended general-fitness block. One app, any athletic goal.
 
@@ -38,11 +51,14 @@
 ## Quick start
 
 ```bash
-# Local dev (SQLite, no setup)
-cd backend
+# Local dev (SQLite, no setup). Needs Python 3.11+
+git clone https://github.com/ALBOU517/Taper.git
+cd Taper/backend
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
-# open http://localhost:8000 and pick a demo athlete
+# open http://localhost:8000 and create an account
 ```
 
 ```bash
@@ -56,6 +72,10 @@ Tests and lint:
 ```bash
 cd backend && pytest -q && ruff check app tests
 ```
+
+### Deploy your own copy for free
+
+The live demo runs on [Render](https://render.com) (free web service from the `Dockerfile`) with a free [Neon](https://neon.tech) Postgres database. Create the Neon project, then a Render *Web Service* from this repo (Docker, Free plan) with two environment variables: `SECRET_KEY` (any long random string) and `DATABASE_URL` (the Neon connection string, `postgresql://user:password@host/db?sslmode=require`). The free web service sleeps when idle; the database is what keeps your data.
 
 New accounts go through a short setup (body, goal, today's weight, calendar). Nothing is estimated until you enter it.
 
