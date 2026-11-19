@@ -31,6 +31,23 @@ def ensure_dirs() -> None:
     BACKUP_DIR.mkdir(exist_ok=True)
 
 
+def _describe(url: str) -> None:
+    """Log a secret-free summary of the database URL, to debug deployments."""
+    from urllib.parse import unquote, urlsplit
+
+    try:
+        u = urlsplit(url)
+        pw = unquote(u.password or "")
+        print(
+            f"[taper] database: user={u.username!r} host={u.hostname!r} db={u.path.lstrip('/')!r} "
+            f"password_len={len(pw)} password_prefix_ok={pw.startswith('npg_')} "
+            f"password_has_space={any(c.isspace() for c in pw)} placeholder={'PASTE' in pw.upper()}",
+            flush=True,
+        )
+    except ValueError:
+        print("[taper] database: URL could not be parsed", flush=True)
+
+
 def database_url() -> str:
     url = os.getenv("DATABASE_URL")
     if url:
@@ -40,6 +57,7 @@ def database_url() -> str:
             url = found.group(0)
         for prefix in ("postgres://", "postgresql://"):
             if url.startswith(prefix):
+                _describe(url)
                 return "postgresql+psycopg://" + url[len(prefix):]
         url = url.strip().strip("'\"")
         if "://" not in url:
