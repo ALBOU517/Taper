@@ -1248,8 +1248,78 @@ const TodayView = {
   </div>`,
 };
 
+/* ================================================================ week calendar grid */
+const H0 = 5, H1 = 23, PX = 44;               // hours shown, pixels per hour
+const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+const hhmm = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const BUSY_LABEL = { class: "class", work: "work", exam: "exam" };
+
+const WeekGrid = {
+  props: { start: Object, sessions: Array, blocks: Array },
+  emits: ["open"],
+  setup(props, { emit }) {
+    const cal = ref(null), now = ref(new Date()), day = ref(0);
+    const load = async () => { cal.value = await api(`/api/calendar/week?d=${iso(props.start)}`).catch(() => ({ busy: [] })); };
+    watch(() => props.start, load); onMounted(() => { load(); const t = new Date(); const i = Math.round((mondayOf(t) - props.start) / 864e5); day.value = i === 0 ? (t.getDay() + 6) % 7 : 0; });
+    const timer = setInterval(() => (now.value = new Date()), 60000); onUnmounted(() => clearInterval(timer));
+    const lanes = (items) => {               // side-by-side columns for overlapping items
+      items.sort((a, b) => a.s - b.s || b.e - a.e);
+      let group = [], end = -1;
+      const flush = () => { const cols = []; for (const it of group) { let c = cols.findIndex((x) => x <= it.s); if (c < 0) { c = cols.length; cols.push(0); } cols[c] = it.e; it.col = c; } for (const it of group) it.n = cols.length; };
+      for (const it of items) { if (it.s >= end) { flush(); group = []; } group.push(it); end = Math.max(end, it.e); }
+      flush(); return items;
+    };
+    const days = computed(() => [...Array(7)].map((_, i) => {
+      const d = iso(addDays(props.start, i)), lo = H0 * 60, hi = H1 * 60, items = [];
+      for (const b of cal.value?.busy || []) {
+        if (b.all_day || b.kind === "study") continue;
+        const s = new Date(b.start), e = new Date(b.end), d0 = parseISO(d), d1 = addDays(d0, 1);
+        if (e <= d0 || s >= d1) continue;
+        const sm = s < d0 ? 0 : s.getHours() * 60 + s.getMinutes(), em = e >= d1 ? 1440 : e.getHours() * 60 + e.getMinutes();
+        if (em <= lo || sm >= hi) continue;
+        items.push({ k: "b" + b.start + b.title, s: Math.max(sm, lo), e: Math.min(em, hi), t: b.title, cls: "ev-busy ev-" + b.kind, time: `${hhmm(sm)}–${hhmm(em % 1440)}` });
+      }
+      for (const b of props.blocks.filter((x) => x.day === d)) {
+        const sm = toMin(b.start_time);
+        items.push({ k: "s" + b.id, s: sm, e: sm + b.minutes, t: "📖 " + b.course, sub: b.title.split(" — ")[1], cls: "ev-study " + b.status, time: `${b.start_time}–${b.end_time}`, link: "#/study" });
+      }
+      for (const x of props.sessions.filter((x) => x.day === d && x.start_time && x.status !== "missed")) {
+        const sm = toMin(x.start_time);
+        items.push({ k: "w" + x.id, s: sm, e: sm + x.minutes, t: x.title, cls: `ev-train s-${x.sport} ${x.status}`, time: `${x.start_time}–${hhmm(sm + x.minutes)}`, session: x });
+      }
+      const loose = props.sessions.filter((x) => x.day === d && !x.start_time && x.status !== "missed");
+      // short reminders (prayers, deadlines) sit behind as thin markers and don't squeeze other events
+      const thin = items.filter((x) => x.cls.startsWith("ev-busy") && x.e - x.s <= 20).map((x) => ({ ...x, col: 0, n: 1, cls: x.cls + " thin" }));
+      const main = lanes(items.filter((x) => x.e > x.s && !thin.some((t) => t.k === x.k)));
+      return { d, i, dow: DOW[i], date: parseISO(d).getDate(), today: d === iso(new Date()), items: [...thin, ...main], loose };
+    }));
+    const style = (it) => ({ top: (it.s - H0 * 60) * PX / 60 + "px", height: Math.max(14, (it.e - it.s) * PX / 60 - 2) + "px",
+      left: `calc(${(it.col / it.n) * 100}% + 2px)`, width: `calc(${100 / it.n}% - 4px)` });
+    const nowTop = computed(() => (now.value.getHours() * 60 + now.value.getMinutes() - H0 * 60) * PX / 60);
+    const hours = [...Array(H1 - H0)].map((_, i) => H0 + i);
+    const click = (it) => { if (it.session) emit("open", it.session); else if (it.link) location.hash = it.link.slice(1); };
+    return { days, style, hours, PX, nowTop, day, click, H0 };
+  },
+  template: `
+  <div class="wgrid" :style="{ '--px': PX + 'px' }">
+    <div class="wg-daynav"><button class="btn ghost small" :disabled="day === 0" @click="day--">‹</button><b>{{ days[day].dow }} {{ days[day].date }}</b><button class="btn ghost small" :disabled="day === 6" @click="day++">›</button></div>
+    <div class="wg-head"><span></span><div v-for="d in days" :key="d.d" :class="{ today: d.today, sel: d.i === day }">{{ d.dow }} <small>{{ d.date }}</small>
+      <button v-for="x in d.loose" :key="x.id" class="wg-loose" :class="'s-' + x.sport" @click="$emit('open', x)">{{ x.title }}</button></div></div>
+    <div class="wg-body">
+      <div class="wg-hours"><span v-for="h in hours" :key="h" :style="{ height: PX + 'px' }">{{ String(h).padStart(2, '0') }}:00</span></div>
+      <div v-for="d in days" :key="d.d" class="wg-col" :class="{ today: d.today, sel: d.i === day }" :style="{ height: hours.length * PX + 'px' }">
+        <i v-for="h in hours" :key="h" class="wg-line" :style="{ top: (h - H0) * PX + 'px' }"></i>
+        <div v-if="d.today && nowTop > 0" class="wg-now" :style="{ top: nowTop + 'px' }"></div>
+        <div v-for="it in d.items" :key="it.k" class="ev" :class="it.cls" :style="style(it)" :title="it.t + ' · ' + it.time" @click="click(it)">
+          <b>{{ it.t }}</b><small v-if="it.e - it.s >= 40">{{ it.time }}<template v-if="it.sub"> · {{ it.sub }}</template></small>
+        </div>
+      </div>
+    </div>
+  </div>`,
+};
+
 const WeekView = {
-  components: { WorkoutCard },
+  components: { WorkoutCard, WeekGrid },
   setup() {
     const start = ref(mondayOf(route.query.d ? parseISO(route.query.d) : new Date()));
     const sessions = ref([]), plan = ref(null), selected = ref(null), loading = ref(true), blocks = ref([]);
@@ -1281,7 +1351,9 @@ const WeekView = {
     const thisWeek = () => { start.value = mondayOf(new Date()); history.replaceState(null, "", "#/week"); };
     const changed = async () => { await load(); };   // the open card already lists any rebalancing
     const studyMin = computed(() => blocks.value.reduce((a, b) => a + b.minutes, 0));
-    return { start, days, meta, totals, shift, thisWeek, selected, load, changed, loading, fmtMin, fmtDay, iso, studyMin };
+    const mode = ref(localStorage.getItem("taper.weekmode") || "grid");
+    watch(mode, (m) => localStorage.setItem("taper.weekmode", m));
+    return { start, days, meta, totals, shift, thisWeek, selected, load, changed, loading, fmtMin, fmtDay, iso, studyMin, mode, sessions, blocks };
   },
   template: `
   <div>
@@ -1303,7 +1375,11 @@ const WeekView = {
       <div v-if="studyMin"><span class="num">{{ fmtMin(studyMin) }}</span><small>of study planned</small></div>
     </div>
     <p v-if="meta && meta.notes.length" class="notice">{{ meta.notes.join(' ') }}</p>
-    <div class="days" style="margin-top:16px">
+    <div class="seg" role="tablist" style="margin-top:14px">
+      <button :class="{ on: mode === 'grid' }" @click="mode = 'grid'">Calendar</button><button :class="{ on: mode === 'list' }" @click="mode = 'list'">List</button>
+    </div>
+    <WeekGrid v-if="mode === 'grid'" :start="start" :sessions="sessions" :blocks="blocks" @open="selected = $event" style="margin-top:12px" />
+    <div v-else class="days" style="margin-top:16px">
       <div v-for="d in days" :key="d.d" class="day" :class="{ 'is-today': d.today }">
         <h3>{{ d.dow }} <small>{{ d.date }}</small></h3>
         <template v-for="s in d.items" :key="(s.study ? 'b' : 's') + s.id">

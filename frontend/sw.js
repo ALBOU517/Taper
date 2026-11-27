@@ -1,6 +1,6 @@
 // Offline-first shell, network-first API (falls back to last good response for bad gym Wi-Fi).
-const SHELL = "taper-shell-v8";
-const API = "taper-api-v8";
+const SHELL = "taper-shell-v9";
+const API = "taper-api-v9";
 const ASSETS = ["./", "index.html", "styles.css", "app.js", "vendor/vue.esm-browser.prod.js", "manifest.webmanifest",
   "fonts/barlow-latin-400-normal.woff2", "fonts/barlow-latin-500-normal.woff2", "fonts/barlow-latin-600-normal.woff2",
   "fonts/barlow-condensed-latin-500-normal.woff2", "fonts/barlow-condensed-latin-600-normal.woff2",
