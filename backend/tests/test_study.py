@@ -191,3 +191,11 @@ def test_study_during_capped_hours():
     from app.study import _keywords
     assert _keywords("RAMQ:4, bus") == [("ramq", 4.0), ("bus", None)]
     assert _keywords("RAMQ: 3.5h") == [("ramq", 3.5)]
+
+
+def test_ics_times_are_exact_utc():
+    from app.engine import ics
+    out = ics.build_calendar([], study=[{"id": 1, "day": date(2026, 11, 27), "start_time": "06:00", "minutes": 90,
+                                         "status": "planned", "title": "ASD"}], tz="America/Toronto")
+    assert "DTSTART:20261127T110000Z" in out and "DTEND:20261127T123000Z" in out
+    assert "X-WR-TIMEZONE:America/Toronto" in out
