@@ -1870,7 +1870,7 @@ const StudySettings = {
       <label class="field">Latest finish<input type="time" v-model="f.day_end"></label>
       <label class="field">Stop before an exam (min)<input type="number" min="0" max="240" step="15" v-model.number="f.exam_gap_min"></label>
     </div>
-    <label class="field">Calendar events you can study during (comma-separated words from their titles)<input v-model="f.ok_during" placeholder="RAMQ, bus"></label>
+    <label class="field">Calendar events you can study during (words from their titles, comma-separated; add :hours to cap it per event)<input v-model="f.ok_during" placeholder="RAMQ:4, bus"></label>
     <div class="actions"><button class="btn">Save and rebuild</button></div>
   </form>`,
 };

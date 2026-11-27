@@ -185,3 +185,9 @@ def test_study_api_flow(client, auth):
     # backup round trip keeps deadlines
     dump = client.get("/api/export", headers=auth).json()
     assert dump["deadlines"] and "study_blocks" in dump
+
+
+def test_study_during_capped_hours():
+    from app.study import _keywords
+    assert _keywords("RAMQ:4, bus") == [("ramq", 4.0), ("bus", None)]
+    assert _keywords("RAMQ: 3.5h") == [("ramq", 3.5)]

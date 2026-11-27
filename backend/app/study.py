@@ -105,8 +105,19 @@ def overview(db: DB, user: User, today: Optional[date] = None) -> dict:
 
 
 # ------------------------------------------------------------------ planning
-def _keywords(s: str) -> list[str]:
-    return [k.strip().lower() for k in (s or "").split(",") if k.strip()]
+def _keywords(s: str) -> list[tuple[str, Optional[float]]]:
+    """'RAMQ:4, bus' -> [('ramq', 4.0), ('bus', None)]: study during those events,
+    optionally only the first N hours of each one."""
+    out = []
+    for k in (s or "").split(","):
+        name, _, hours = k.strip().partition(":")
+        if name.strip():
+            try:
+                h = float(hours.replace("h", "").replace(",", ".")) if hours.strip() else None
+            except ValueError:
+                h = None
+            out.append((name.strip().lower(), h))
+    return out
 
 
 def replan(db: DB, user: User, now: Optional[datetime] = None) -> dict:
@@ -149,7 +160,12 @@ def replan(db: DB, user: User, now: Optional[datetime] = None) -> dict:
     pad = timedelta(minutes=int(sch.get("buffer_min") or 0))
     raw: list[S.Interval] = []
     for b in busy:
-        if b.all_day or any(k in b.title.lower() for k in ok):
+        if b.all_day:
+            continue
+        match = next((h for k, h in ok if k in b.title.lower()), False)
+        if match is not False:
+            if match is not None and b.end - b.start > timedelta(hours=match):
+                raw.append(S.Interval(b.start + timedelta(hours=match), b.end))   # rest of the shift stays busy
             continue
         long_event = b.end - b.start >= timedelta(hours=2) and b.start.date() == b.end.date()   # not overnight sleep
         p = pad if b.kind in ("class", "work", "exam") or long_event else timedelta(0)
