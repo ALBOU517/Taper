@@ -33,6 +33,7 @@ TIMEOUT = httpx.Timeout(8.0, connect=4.0)
 
 CNF_BASE = "https://food-nutrition.canada.ca/api/canadian-nutrient-file"
 OFF_BASE = "https://world.openfoodfacts.org"
+OFF_SEARCH = "https://search.openfoodfacts.org/search"
 USDA_BASE = "https://api.nal.usda.gov/fdc/v1"
 
 # CNF nutrient_name_id → field (ids per the CNF nutrient dictionary)
@@ -98,7 +99,10 @@ def parse_off_product(p: dict) -> Optional[FoodData]:
     q = _num(p.get("serving_quantity"))
     if q:
         servings.append({"label": p.get("serving_size") or f"{q:g} g", "grams": q})
-    return FoodData("off", str(code), name.strip(), (p.get("brands") or "").split(",")[0].strip() or None, str(code),
+    brands = p.get("brands") or ""
+    if isinstance(brands, list):                     # the newer search service returns a list
+        brands = ",".join(str(b) for b in brands)
+    return FoodData("off", str(code), name.strip(), brands.split(",")[0].strip() or None, str(code),
                     kcal, _num(n.get("proteins_100g")), _num(n.get("carbohydrates_100g")), _num(n.get("fat_100g")),
                     _num(n.get("fiber_100g")), _num(n.get("sugars_100g")),
                     round(sodium * 1000, 1) if sodium is not None else None, servings)
@@ -129,11 +133,24 @@ async def off_search(client: httpx.AsyncClient, q: str, limit: int = 15) -> list
         return _cache[key][1]
     if not _off_limiter.allow():
         raise RuntimeError("Open Food Facts search limit reached — try again in a minute")
-    r = await client.get(f"{OFF_BASE}/cgi/search.pl", params={
-        "search_terms": q, "search_simple": 1, "action": "process", "json": 1, "page_size": limit,
-        "fields": OFF_FIELDS, "lc": "fr"})
-    r.raise_for_status()
-    out = [f for f in (parse_off_product(p) for p in r.json().get("products", [])) if f]
+    # The newer search service first; the legacy search.pl is often overloaded (503) and is the fallback.
+    products, last_err = None, None
+    try:
+        r = await client.get(OFF_SEARCH, params={"q": q, "page_size": limit, "fields": OFF_FIELDS, "langs": "fr,en"})
+        r.raise_for_status()
+        products = r.json().get("hits")
+    except Exception as e:  # noqa: BLE001
+        last_err = e
+    if products is None:
+        try:
+            r = await client.get(f"{OFF_BASE}/cgi/search.pl", params={
+                "search_terms": q, "search_simple": 1, "action": "process", "json": 1, "page_size": limit,
+                "fields": OFF_FIELDS, "lc": "fr"})
+            r.raise_for_status()
+            products = r.json().get("products", [])
+        except Exception as e:  # noqa: BLE001
+            raise RuntimeError("Open Food Facts is busy right now — try again in a minute, or scan the barcode") from (e or last_err)
+    out = [f for f in (parse_off_product(p) for p in products) if f]
     _cache[key] = (time.time(), out)
     return out
 
