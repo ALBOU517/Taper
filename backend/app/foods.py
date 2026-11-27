@@ -102,6 +102,7 @@ def parse_off_product(p: dict) -> Optional[FoodData]:
     brands = p.get("brands") or ""
     if isinstance(brands, list):                     # the newer search service returns a list
         brands = ",".join(str(b) for b in brands)
+    brands = re.sub(r"(^|,)\s*[a-z]{2}:", r"\1", brands)   # "xx:Lactantia" -> "Lactantia"
     return FoodData("off", str(code), name.strip(), brands.split(",")[0].strip() or None, str(code),
                     kcal, _num(n.get("proteins_100g")), _num(n.get("carbohydrates_100g")), _num(n.get("fat_100g")),
                     _num(n.get("fiber_100g")), _num(n.get("sugars_100g")),
@@ -134,11 +135,20 @@ async def off_search(client: httpx.AsyncClient, q: str, limit: int = 15) -> list
     if not _off_limiter.allow():
         raise RuntimeError("Open Food Facts search limit reached — try again in a minute")
     # The newer search service first; the legacy search.pl is often overloaded (503) and is the fallback.
+    # It only returns names, so the nutrition facts come from one product lookup for all the codes found.
     products, last_err = None, None
     try:
-        r = await client.get(OFF_SEARCH, params={"q": q, "page_size": limit, "fields": OFF_FIELDS, "langs": "fr,en"})
+        r = await client.get(OFF_SEARCH, params={"q": q, "page_size": limit, "fields": "code", "langs": "fr,en"})
         r.raise_for_status()
-        products = r.json().get("hits")
+        codes = [str(h["code"]) for h in r.json().get("hits", []) if h.get("code")]
+        if codes:
+            r = await client.get(f"{OFF_BASE}/api/v2/search", params={"code": ",".join(codes), "fields": OFF_FIELDS,
+                                                                       "page_size": len(codes)})
+            r.raise_for_status()
+            by_code = {str(p.get("code")): p for p in r.json().get("products", [])}
+            products = [by_code[c] for c in codes if c in by_code]
+        else:
+            products = []
     except Exception as e:  # noqa: BLE001
         last_err = e
     if products is None:

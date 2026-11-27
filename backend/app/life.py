@@ -278,7 +278,10 @@ def upsert_food(db: DB, f: F.FoodData) -> Food:
         row = Food(source=f.source, source_id=f.source_id)
         db.add(row)
     for k in ("name", "brand", "barcode", "kcal", "protein", "carbs", "fat", "fiber", "sugar", "sodium_mg", "servings"):
-        setattr(row, k, getattr(f, k))
+        new = getattr(f, k)
+        if new is None or new == []:         # never wipe values we already have with an incomplete copy
+            continue
+        setattr(row, k, new)
     row.fetched_at = datetime.now(timezone.utc)
     db.flush()
     return row
