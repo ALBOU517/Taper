@@ -27,6 +27,7 @@ class SettingsIn(BaseModel):
     nutrition: Optional[dict] = None
     schedule: Optional[dict] = None
     gym_routines: Optional[list[dict]] = None
+    study: Optional[dict] = None
 
 
 @router.get("/settings")
@@ -324,6 +325,8 @@ async def sync_calendars(user: User = Depends(current_user), db: DB = Depends(ge
     for s in srcs:
         await life.fetch_calendar(s)
     db.commit()
+    from .. import study
+    study.safe_replan(db, user)           # new classes or shifts: move revision blocks out of the way
     return [_src_out(s) for s in srcs]
 
 
@@ -353,6 +356,8 @@ def replan(user: User = Depends(current_user), db: DB = Depends(get_db)):
         raise HTTPException(404, str(e)) from e
     except ValueError as e:
         raise HTTPException(409, str(e)) from e
+    from .. import study
+    study.safe_replan(db, user)
     return {"id": new.id, "weeks": len(new.weeks)}
 
 

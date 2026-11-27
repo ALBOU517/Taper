@@ -36,7 +36,7 @@ def _when(d: date, start: str | None, minutes: int) -> list[str]:
 
 
 def build_calendar(sessions: Iterable[dict], name: str = "Taper training", reminder_hour: int = 7,
-                   weekly_targets: dict | None = None) -> str:
+                   weekly_targets: dict | None = None, study: Iterable[dict] = ()) -> str:
     """``sessions``: dicts with id, day (date), sport, title, dsl, minutes, tss, status."""
     now = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Taper//Training Engine//EN",
@@ -69,6 +69,26 @@ def build_calendar(sessions: Iterable[dict], name: str = "Taper training", remin
             "ACTION:DISPLAY",
             f"DESCRIPTION:{_esc('Today: ' + s['title'])}",
             "TRIGGER:-PT60M" if s.get("start_time") else f"TRIGGER:PT{reminder_hour}H",
+            "END:VALARM",
+            "END:VEVENT",
+        ]
+    for b in study:
+        if b.get("status") == "missed":
+            continue
+        title = ("✅ " if b.get("status") == "done" else "") + f"📖 {b['title']}"
+        desc = f"{b['minutes']} min revision block planned by Taper." + (f"\n{b['detail']}" if b.get("detail") else "")
+        lines += [
+            "BEGIN:VEVENT",
+            f"UID:taper-study-{b['id']}@taper.app",
+            f"DTSTAMP:{now}",
+            *_when(b["day"], b["start_time"], b["minutes"]),
+            f"SUMMARY:{_esc(title)}",
+            f"DESCRIPTION:{_esc(desc)}",
+            "CATEGORIES:STUDY",
+            "BEGIN:VALARM",
+            "ACTION:DISPLAY",
+            f"DESCRIPTION:{_esc('Study: ' + b['title'])}",
+            "TRIGGER:-PT10M",
             "END:VALARM",
             "END:VEVENT",
         ]

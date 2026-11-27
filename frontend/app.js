@@ -1142,9 +1142,9 @@ const HabitSettings = {
 const TodayView = {
   components: { WorkoutCard, LoadChart, FuelCard, Checklist },
   setup() {
-    const data = ref(null), curve = ref(null), plan = ref(null), nut = ref(null), loading = ref(true), ck = ref(0);
+    const data = ref(null), curve = ref(null), plan = ref(null), nut = ref(null), loading = ref(true), ck = ref(0), st = ref(null);
     const load = async () => {
-      [data.value, curve.value, plan.value, nut.value] = await Promise.all([api("/api/today"), api("/api/load"), api("/api/plans/active"), api("/api/nutrition/day")]);
+      [data.value, curve.value, plan.value, nut.value, st.value] = await Promise.all([api("/api/today"), api("/api/load"), api("/api/plans/active"), api("/api/nutrition/day"), api("/api/study").catch(() => null)]);
       loading.value = false; ck.value++;
     };
     const fuelFor = (id) => nut.value?.sessions?.find((x) => x.session.id === id)?.fuel;
@@ -1170,7 +1170,13 @@ const TodayView = {
     };
     const statusLabel = (s) => STATUS_LABEL[s] || s;
     const weekMeta = computed(() => plan.value?.weeks.find((w) => w.start === iso(mondayOf(parseISO(data.value.date)))));
-    return { data, curve, plan, nut, ck, fuelFor, loading, load, lanes, notify, fmtDay, statusLabel, weekMeta, SPORTS, go };
+    const soon = computed(() => {           // the next two exams and the next two other deadlines
+      const all = (st.value?.deadlines || []).filter((d) => d.days_left <= 21);
+      const pick = [...all.filter((d) => d.kind === "exam").slice(0, 2), ...all.filter((d) => d.kind !== "exam").slice(0, 2)];
+      return all.filter((d) => pick.includes(d));
+    });
+    const studyToday = computed(() => (st.value?.blocks || []).filter((b) => b.day === data.value?.date));
+    return { data, curve, plan, nut, ck, fuelFor, loading, load, lanes, notify, fmtDay, statusLabel, weekMeta, SPORTS, go, soon, studyToday, fmtH, leftLabel };
   },
   template: `
   <div v-if="loading" class="loading">Loading your day…</div>
@@ -1183,6 +1189,14 @@ const TodayView = {
       <div v-if="data.days_to_race != null && data.days_to_race >= 0" class="countdown"><span class="num">{{ data.days_to_race }}</span><span class="muted">days to race day</span></div>
     </div>
 
+    <div v-if="soon.length" class="soon">
+      <a v-for="d in soon" :key="d.id" href="#/study" class="soon-item" :class="['k-' + d.kind, { hot: d.days_left <= 3 }]">
+        <span class="num">{{ d.days_left }}</span><span><b>{{ d.course }}</b><small>{{ d.title }} · {{ leftLabel(d.days_left) }}</small></span>
+      </a>
+      <span class="soon-sum muted" v-if="studyToday.length">{{ fmtH(studyToday.reduce((a, b) => a + b.minutes, 0)) }} of study today</span>
+    </div>
+
+    <Checklist v-if="!plan" :day="data.date" :key="'np' + ck" @changed="load" style="max-width:620px" />
     <div v-if="!plan" class="empty-state">
       <h2>Set your goal to get a plan</h2>
       <p>Choose a race and a date, tell us how much time you have each day, and every session through race day gets scheduled.</p>
@@ -1238,17 +1252,20 @@ const WeekView = {
   components: { WorkoutCard },
   setup() {
     const start = ref(mondayOf(route.query.d ? parseISO(route.query.d) : new Date()));
-    const sessions = ref([]), plan = ref(null), selected = ref(null), loading = ref(true);
+    const sessions = ref([]), plan = ref(null), selected = ref(null), loading = ref(true), blocks = ref([]);
     const load = async () => {
       const s = iso(start.value), e = iso(addDays(start.value, 6));
-      [sessions.value, plan.value] = await Promise.all([api(`/api/sessions?start=${s}&end=${e}`), plan.value ? plan.value : api("/api/plans/active")]);
+      [sessions.value, plan.value, blocks.value] = await Promise.all([api(`/api/sessions?start=${s}&end=${e}`), plan.value ? plan.value : api("/api/plans/active"),
+        api(`/api/study/blocks?start=${s}&end=${e}`).catch(() => [])]);
       if (selected.value) selected.value = sessions.value.find((x) => x.id === selected.value.id) || null;
       loading.value = false;
     };
     watch(start, load); onMounted(load);
     const days = computed(() => [...Array(7)].map((_, i) => {
       const d = iso(addDays(start.value, i));
-      return { d, dow: DOW[i], date: parseISO(d).getDate(), items: sessions.value.filter((s) => s.day === d), today: d === iso(new Date()) };
+      const items = [...sessions.value.filter((s) => s.day === d), ...blocks.value.filter((b) => b.day === d).map((b) => ({ ...b, study: true }))]
+        .sort((a, b) => (a.start_time || "99").localeCompare(b.start_time || "99"));
+      return { d, dow: DOW[i], date: parseISO(d).getDate(), items, today: d === iso(new Date()) };
     }));
     const meta = computed(() => plan.value?.weeks.find((w) => w.start === iso(start.value)));
     const totals = computed(() => {
@@ -1263,7 +1280,8 @@ const WeekView = {
     const shift = (n) => { start.value = addDays(start.value, 7 * n); history.replaceState(null, "", `#/week?d=${iso(start.value)}`); };
     const thisWeek = () => { start.value = mondayOf(new Date()); history.replaceState(null, "", "#/week"); };
     const changed = async () => { await load(); };   // the open card already lists any rebalancing
-    return { start, days, meta, totals, shift, thisWeek, selected, load, changed, loading, fmtMin, fmtDay, iso };
+    const studyMin = computed(() => blocks.value.reduce((a, b) => a + b.minutes, 0));
+    return { start, days, meta, totals, shift, thisWeek, selected, load, changed, loading, fmtMin, fmtDay, iso, studyMin };
   },
   template: `
   <div>
@@ -1282,15 +1300,22 @@ const WeekView = {
       <div><span class="num">{{ fmtMin(totals.min) }}</span><small>planned time</small></div>
       <div><span class="num">{{ Math.round(totals.tss) }}</span><small>endurance load (TSS){{ meta ? ', target ' + meta.target_tss : '' }}{{ totals.gymTss ? ' · + ' + Math.round(totals.gymTss) + ' from strength' : '' }}</small></div>
       <div><span class="num">{{ totals.done }}/{{ totals.n }}</span><small>sessions done</small></div>
+      <div v-if="studyMin"><span class="num">{{ fmtMin(studyMin) }}</span><small>of study planned</small></div>
     </div>
     <p v-if="meta && meta.notes.length" class="notice">{{ meta.notes.join(' ') }}</p>
     <div class="days" style="margin-top:16px">
       <div v-for="d in days" :key="d.d" class="day" :class="{ 'is-today': d.today }">
         <h3>{{ d.dow }} <small>{{ d.date }}</small></h3>
-        <button v-for="s in d.items" :key="s.id" class="tile" :class="['s-' + s.sport, s.status, { moved: s.source === 'rebalance' }]" @click="selected = s">
-          <span class="t">{{ s.title }}</span>
-          <span class="m">{{ fmtMin(s.minutes) }} · {{ Math.round(s.tss) }} TSS</span>
-        </button>
+        <template v-for="s in d.items" :key="(s.study ? 'b' : 's') + s.id">
+          <a v-if="s.study" href="#/study" class="tile s-study" :class="s.status">
+            <span class="t">📖 {{ s.course }}</span>
+            <span class="m">{{ s.start_time }}–{{ s.end_time }}</span>
+          </a>
+          <button v-else class="tile" :class="['s-' + s.sport, s.status, { moved: s.source === 'rebalance' }]" @click="selected = s">
+            <span class="t">{{ s.title }}</span>
+            <span class="m">{{ s.start_time ? s.start_time + ' · ' : '' }}{{ fmtMin(s.minutes) }} · {{ Math.round(s.tss) }} TSS</span>
+          </button>
+        </template>
         <span v-if="!d.items.length" class="empty">Rest</span>
       </div>
     </div>
@@ -1785,10 +1810,186 @@ const SettingsView = {
   </div>`,
 };
 
+/* ================================================================ study */
+const KIND = { exam: "Exam", assignment: "Assignment", quiz: "Quiz" };
+const fmtH = (min) => { const h = (min || 0) / 60; return `${h >= 10 ? Math.round(h) : Math.round(h * 2) / 2} h`; };
+const fmtDue = (d) => `${fmtDay(d.due_date, { weekday: "short", month: "short", day: "numeric" })} · ${d.due_time === "23:59" ? "end of day" : d.due_time}`;
+const leftLabel = (n) => n <= 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`;
+
+const DeadlineForm = {
+  props: { d: Object },
+  emits: ["saved", "cancel"],
+  setup(props, { emit }) {
+    const f = reactive(props.d ? { ...props.d } : { course: "", title: "", kind: "exam", due_date: iso(addDays(new Date(), 7)), due_time: "09:00", end_time: "", weight: null, hours: null, location: "", done: false });
+    const busy = ref(false);
+    const save = async () => {
+      busy.value = true;
+      const body = { course: f.course, title: f.title, kind: f.kind, due_date: f.due_date, due_time: f.due_time || "23:59",
+        end_time: f.end_time || null, weight: f.weight === "" ? null : f.weight, hours: f.hours === "" ? null : f.hours,
+        location: f.location || null, done: !!f.done };
+      try {
+        const r = await api(props.d ? `/api/study/deadlines/${props.d.id}` : "/api/study/deadlines", { method: props.d ? "PUT" : "POST", body });
+        emit("saved", r.plan);
+      } catch (e) { toast(e.message); }
+      busy.value = false;
+    };
+    return { f, save, busy };
+  },
+  template: `
+  <form class="dl-form" @submit.prevent="save">
+    <div class="form-row">
+      <label class="field">Course<input v-model="f.course" required placeholder="Bases de données"></label>
+      <label class="field">What<input v-model="f.title" required placeholder="Examen final"></label>
+      <label class="field">Type<select v-model="f.kind"><option value="exam">Exam</option><option value="assignment">Assignment / TP</option><option value="quiz">Quiz</option></select></label>
+    </div>
+    <div class="form-row">
+      <label class="field">{{ f.kind === 'exam' ? 'Date' : 'Due date' }}<input type="date" v-model="f.due_date" required></label>
+      <label class="field">{{ f.kind === 'exam' ? 'Starts' : 'Due at' }}<input type="time" v-model="f.due_time"></label>
+      <label v-if="f.kind === 'exam'" class="field">Ends<input type="time" v-model="f.end_time"></label>
+      <label class="field">Weight (%)<input type="number" min="0" max="100" step="0.5" v-model.number="f.weight"></label>
+      <label class="field">Hours to put in<input type="number" min="0" max="200" step="0.5" v-model.number="f.hours" placeholder="auto"></label>
+    </div>
+    <div class="actions" style="margin-top:0"><button class="btn" :disabled="busy">{{ d ? 'Save' : 'Add' }}</button><button type="button" class="btn ghost" @click="$emit('cancel')">Cancel</button></div>
+  </form>`,
+};
+
+const StudySettings = {
+  props: { s: Object },
+  emits: ["saved"],
+  setup(props, { emit }) {
+    const f = reactive({ ...props.s });
+    const save = async () => { await api("/api/settings", { method: "PUT", body: { study: { ...f } } }); emit("saved"); };
+    return { f, save };
+  },
+  template: `
+  <form @submit.prevent="save">
+    <div class="form-row">
+      <label class="field">Block length (min)<input type="number" min="30" max="180" step="5" v-model.number="f.block_min"></label>
+      <label class="field">Max study per day (h)<input type="number" min="1" max="14" step="0.5" v-model.number="f.max_per_day_h"></label>
+      <label class="field">Earliest study<input type="time" v-model="f.day_start"></label>
+      <label class="field">Latest finish<input type="time" v-model="f.day_end"></label>
+      <label class="field">Stop before an exam (min)<input type="number" min="0" max="240" step="15" v-model.number="f.exam_gap_min"></label>
+    </div>
+    <label class="field">Calendar events you can study during (comma-separated words from their titles)<input v-model="f.ok_during" placeholder="RAMQ, bus"></label>
+    <div class="actions"><button class="btn">Save and rebuild</button></div>
+  </form>`,
+};
+
+const StudyView = {
+  components: { DeadlineForm, StudySettings },
+  setup() {
+    const o = ref(null), editing = ref(null), adding = ref(false), busy = ref(false), paste = ref(""), showSettings = ref(false);
+    const load = async () => { o.value = await api("/api/study"); };
+    onMounted(load);
+    const report = (p) => {
+      if (!p) return;
+      const short = (p.short || []).map((x) => `${x.course} ${x.title} (${fmtH(x.short_min)} short)`);
+      toast(short.length ? `Not enough free time for: ${short.join(", ")}. Free up time or lower the hours.` : `Study plan rebuilt: ${p.blocks} blocks, ${fmtH(p.minutes)}.`);
+    };
+    const rebuild = async () => { busy.value = true; try { report(await api("/api/study/plan", { method: "POST" })); await load(); } catch (e) { toast(e.message); } busy.value = false; };
+    const saved = async (p) => { editing.value = null; adding.value = false; report(p); await load(); };
+    const del = async (d) => { if (!confirm(`Delete ${d.course} — ${d.title} and its study blocks?`)) return; report((await api(`/api/study/deadlines/${d.id}`, { method: "DELETE" })).plan); await load(); };
+    const markDone = async (d) => { await api(`/api/study/deadlines/${d.id}`, { method: "PUT", body: { ...d, done: true } }); toast("Nice. Marked done, its future blocks are freed up."); await load(); };
+    const imp = async () => {
+      busy.value = true;
+      try { const r = await api("/api/study/import", { method: "POST", body: { text: paste.value } }); paste.value = "";
+        toast(`${r.added} added, ${r.updated} updated${r.errors.length ? ` · ${r.errors.join("; ")}` : ""}`); report(r.plan); await load(); }
+      catch (e) { toast(e.message); }
+      busy.value = false;
+    };
+    const setBlock = async (b, status) => { await api(`/api/study/blocks/${b.id}`, { method: "PATCH", body: { status } }); await load(); };
+    const days = computed(() => {
+      if (!o.value) return [];
+      const m = {};
+      for (const b of o.value.blocks) (m[b.day] ||= []).push(b);
+      return Object.keys(m).sort().slice(0, 7).map((d) => ({ d, items: m[d], min: m[d].reduce((a, b) => a + b.minutes, 0),
+        due: o.value.deadlines.filter((x) => x.due_date === d) }));
+    });
+    const next = computed(() => o.value?.deadlines.find((d) => d.kind === "exam"));
+    const pct = (d) => Math.min(100, (d.done_min / Math.max(1, d.hours_needed * 60)) * 100);
+    const pctPlan = (d) => Math.min(100 - pct(d), (d.planned_min / Math.max(1, d.hours_needed * 60)) * 100);
+    return { o, editing, adding, busy, paste, showSettings, rebuild, saved, del, markDone, imp, setBlock, days, next, pct, pctPlan, fmtH, fmtDue, leftLabel, fmtDay, KIND, load, report };
+  },
+  template: `
+  <div v-if="!o" class="loading">Loading your semester…</div>
+  <div v-else class="study">
+    <div class="today-head">
+      <div>
+        <h1>Study</h1>
+        <p>Every deadline gets its hours, placed in your free time around classes, work and training. Closest and heaviest first.</p>
+      </div>
+      <div v-if="next" class="countdown"><span class="num">{{ next.days_left }}</span><span class="muted">days to {{ next.course }}</span></div>
+    </div>
+
+    <div v-if="!o.deadlines.length && !adding" class="empty-state">
+      <h2>Add your exams and due dates</h2>
+      <p>Paste them below (one per line) or add them one at a time. Taper estimates the hours from the weight and builds your revision blocks.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn" @click="adding = !adding; editing = null">Add a deadline</button>
+      <button class="btn ghost" :disabled="busy || !o.deadlines.length" @click="rebuild">Rebuild study plan</button>
+      <button class="btn ghost" @click="showSettings = !showSettings">Study settings</button>
+    </div>
+    <section v-if="showSettings" class="card-sec"><StudySettings :s="o.settings" @saved="showSettings = false; rebuild()" /></section>
+    <section v-if="adding" class="card-sec"><DeadlineForm @saved="saved" @cancel="adding = false" /></section>
+
+    <div v-if="days.length" class="section-h"><h2>Next study days</h2><span class="muted">Tick blocks off on the Today page, or here</span></div>
+    <div v-if="days.length" class="sdays">
+      <div v-for="day in days" :key="day.d" class="sday">
+        <h3>{{ fmtDay(day.d, { weekday: 'short', month: 'short', day: 'numeric' }) }} <small>{{ fmtH(day.min) }}</small></h3>
+        <p v-for="x in day.due" :key="'d' + x.id" class="due-pill" :class="'k-' + x.kind">{{ x.kind === 'exam' ? '📝' : '⏰' }} {{ x.course }} {{ x.title }} · {{ x.due_time }}</p>
+        <div v-for="b in day.items" :key="b.id" class="sblock" :class="b.status">
+          <span class="time num">{{ b.start_time }}–{{ b.end_time }}</span>
+          <span class="what"><b>{{ b.course }}</b><small>{{ b.title.split(' — ')[1] }}</small></span>
+          <span class="bact">
+            <button class="btn ghost small" :aria-pressed="b.status === 'done'" @click="setBlock(b, b.status === 'done' ? 'planned' : 'done')">{{ b.status === 'done' ? 'Undo' : 'Done' }}</button>
+            <button v-if="b.status !== 'done'" class="btn ghost small" @click="setBlock(b, 'missed')" title="Skipped: rebuild to catch the hours up later">Skip</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="o.deadlines.length" class="section-h"><h2>Coming up</h2><span class="muted">{{ o.deadlines.length }} deadlines</span></div>
+    <div class="deadlines">
+      <article v-for="d in o.deadlines" :key="d.id" class="deadline" :class="'k-' + d.kind">
+        <template v-if="editing === d.id"><DeadlineForm :d="d" @saved="saved" @cancel="editing = null" /></template>
+        <template v-else>
+          <div class="dl-top">
+            <div>
+              <span class="kind">{{ KIND[d.kind] }}{{ d.weight != null ? ' · ' + d.weight + ' %' : '' }}</span>
+              <h3>{{ d.course }} — {{ d.title }}</h3>
+              <p class="muted">{{ fmtDue(d) }}{{ d.end_time ? '–' + d.end_time : '' }} · {{ leftLabel(d.days_left) }}</p>
+            </div>
+            <div class="dl-left num" :class="{ hot: d.days_left <= 3 }">{{ d.days_left }}<small>days</small></div>
+          </div>
+          <div class="dl-bar" :title="'done ' + fmtH(d.done_min) + ', planned ' + fmtH(d.planned_min) + ' of ' + d.hours_needed + ' h'">
+            <i class="done" :style="{ width: pct(d) + '%' }"></i><i class="plan" :style="{ width: pctPlan(d) + '%' }"></i>
+          </div>
+          <p class="dl-fig"><b>{{ fmtH(d.done_min) }}</b> done · {{ fmtH(d.planned_min) }} planned · goal {{ d.hours_needed }} h{{ d.estimated ? ' (estimated)' : '' }}
+            <span v-if="d.short_min >= 30" class="short"> · {{ fmtH(d.short_min) }} doesn't fit</span></p>
+          <div class="actions" style="margin-top:8px">
+            <button class="btn ghost small" @click="editing = d.id; adding = false">Edit</button>
+            <button v-if="d.kind !== 'exam'" class="btn ghost small" @click="markDone(d)">Handed in</button>
+            <button class="btn ghost small" @click="del(d)">Delete</button>
+          </div>
+        </template>
+      </article>
+    </div>
+
+    <details class="howto" style="margin-top:28px" :open="!o.deadlines.length">
+      <summary>Paste a list of deadlines</summary>
+      <p class="muted">One per line: date and time | course | what | weight % | hours (optional). Lines that match an existing deadline update it.</p>
+      <textarea rows="7" v-model="paste" placeholder="2026-12-11 18:30 | Intelligence artificielle | Examen final | 30&#10;2026-12-13 13:30 | Algo & structures de données | Examen final | 35 | 20h&#10;Dec 10 14:00 | Algo & structures de données | TP3 | 10"></textarea>
+      <div class="actions"><button class="btn" :disabled="busy || !paste.trim()" @click="imp">Import</button></div>
+    </details>
+  </div>`,
+};
+
 /* ================================================================ root */
 const VIEWS = { "/today": TodayView, "/week": WeekView, "/food": FoodView, "/body": BodyView, "/season": SeasonView, "/new-plan": NewPlanView,
-  "/builder": BuilderView, "/settings": SettingsView, "/setup": SetupView, "/myfoods": MyFoodsView, "/levels": SeasonView };
-const NAV = [["/today", "Today"], ["/week", "Week"], ["/food", "Food"], ["/body", "Body"], ["/season", "Progress"], ["/settings", "Settings"]];
+  "/builder": BuilderView, "/settings": SettingsView, "/study": StudyView, "/setup": SetupView, "/myfoods": MyFoodsView, "/levels": SeasonView };
+const NAV = [["/today", "Today"], ["/week", "Week"], ["/study", "Study"], ["/food", "Food"], ["/body", "Body"], ["/season", "Progress"], ["/settings", "Settings"]];
 
 const App = {
   components: { Welcome },

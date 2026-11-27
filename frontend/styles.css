@@ -635,3 +635,50 @@ label.btn.disabled { opacity: .45; pointer-events: none; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important; transition-delay: 0s !important; }
 }
+
+/* ================================================================ study */
+:root { --study: #b8860b; }
+:root[data-theme="dark"] { --study: #e0b04a; }
+.s-study { --sport: var(--study); }
+.tile.s-study { text-decoration: none; color: inherit; }
+.k-study .tick .box { border-color: var(--study); }
+.card-sec { background: var(--surface); border-radius: var(--r-lg); padding: 18px 20px; margin-top: 14px; }
+.soon { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 4px 0 18px; }
+.soon-item { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: var(--r-sm); padding: 8px 14px 8px 10px;
+  text-decoration: none; color: inherit; border-left: 4px solid var(--study); }
+.soon-item.k-exam { border-left-color: var(--bad); }
+.soon-item .num { font-size: 1.6rem; font-weight: 700; min-width: 1.6ch; text-align: center; }
+.soon-item b { display: block; font-size: 0.9rem; } .soon-item small { color: var(--muted); font-size: 0.8rem; }
+.soon-item.hot .num { color: var(--bad); }
+.soon-sum { font-size: 0.9rem; margin-left: 4px; }
+.sdays { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+.sday { background: var(--surface); border-radius: var(--r-lg); padding: 14px 16px; }
+.sday h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; }
+.sday h3 small { font-family: var(--body); font-weight: 400; color: var(--muted); font-size: 0.85rem; }
+.sblock { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line-soft); }
+.sblock .time { font-size: 0.88rem; color: var(--muted); white-space: nowrap; }
+.sblock .what b { display: block; font-size: 0.92rem; } .sblock .what small { color: var(--muted); font-size: 0.8rem; }
+.sblock .bact { display: flex; gap: 4px; }
+.sblock .bact .btn { padding: 4px 9px; font-size: 0.8rem; }
+.sblock.done .what b { text-decoration: line-through; color: var(--muted); }
+.sblock.missed { opacity: 0.5; }
+.due-pill { margin: 0 0 6px; font-size: 0.85rem; font-weight: 600; padding: 4px 8px; border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--bad) 12%, var(--surface)); }
+.due-pill.k-assignment, .due-pill.k-quiz { background: color-mix(in srgb, var(--warn) 14%, var(--surface)); }
+.deadlines { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.deadline { background: var(--surface); border-radius: var(--r-lg); padding: 16px 18px; border-top: 4px solid var(--warn); }
+.deadline.k-exam { border-top-color: var(--bad); }
+.deadline h3 { margin: 2px 0 2px; font-size: 1.15rem; }
+.deadline p { margin: 0; }
+.deadline .kind { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+.dl-top { display: flex; justify-content: space-between; gap: 12px; }
+.dl-left { font-size: 2rem; font-weight: 700; line-height: 1; text-align: right; }
+.dl-left small { display: block; font-size: 0.72rem; color: var(--muted); font-weight: 500; }
+.dl-left.hot { color: var(--bad); }
+.dl-bar { height: 8px; background: var(--line-soft); border-radius: 99px; overflow: hidden; display: flex; margin: 12px 0 6px; }
+.dl-bar i { display: block; height: 100%; }
+.dl-bar .done { background: var(--good); } .dl-bar .plan { background: color-mix(in srgb, var(--study) 55%, transparent); }
+.dl-fig { font-size: 0.85rem; color: var(--muted); }
+.dl-fig .short { color: var(--bad); font-weight: 600; }
+.dl-form .form-row { margin-bottom: 12px; }
+.study textarea { width: 100%; font-family: var(--mono, monospace); font-size: 0.88rem; }

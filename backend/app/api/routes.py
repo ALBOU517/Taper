@@ -393,5 +393,14 @@ def calendar(token: str, db: DB = Depends(get_db)):
     rows = db.scalars(select(Session).where(Session.user_id == u.id, Session.day >= start).order_by(Session.day))
     items = [{"id": r.id, "day": r.day, "sport": r.sport, "title": r.title, "dsl": r.dsl, "minutes": r.minutes,
               "tss": r.tss, "status": r.status, "start_time": r.start_time} for r in rows]
-    return Response(ics.build_calendar(items, name=f"Taper — {u.name}"), media_type="text/calendar",
+    from .. import study
+    from ..db import Deadline
+    names = {d.id: d for d in db.scalars(select(Deadline).where(Deadline.user_id == u.id))}
+    blocks = []
+    for b in study.blocks_between(db, u, start, date.today() + timedelta(days=180)):
+        d = names.get(b.deadline_id)
+        blocks.append({"id": b.id, "day": b.day, "start_time": b.start_time, "minutes": b.minutes, "status": b.status,
+                       "title": f"{d.course}" if d else "Study",
+                       "detail": f"For: {d.title} ({d.due_date:%a %b %d} {d.due_time})" if d else ""})
+    return Response(ics.build_calendar(items, name=f"Taper — {u.name}", study=blocks), media_type="text/calendar",
                     headers={"Content-Disposition": 'inline; filename="taper.ics"'})
