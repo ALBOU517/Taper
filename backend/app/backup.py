@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 
-from .db import CalendarSource, DayLog, Food, FoodEntry, Habit, Plan, Session, User, WeightEntry
+from .db import CalendarSource, DayLog, Deadline, Food, FoodEntry, Habit, Plan, Session, StudyBlock, User, WeightEntry
 
 VERSION = 1
 SESSION_FIELDS = ("day", "sport", "kind", "title", "dsl", "minutes", "tss", "distance_m", "status", "actual_minutes",
@@ -53,7 +53,16 @@ def export_user(db: DB, user: User) -> dict:
                    for h in db.scalars(select(Habit).where(Habit.user_id == user.id))],
         "calendars": [{"name": c.name, "url": c.url, "ics": c.ics}
                       for c in db.scalars(select(CalendarSource).where(CalendarSource.user_id == user.id))],
+        "deadlines": [{**_row(d, DEADLINE_FIELDS), "id": d.id}
+                      for d in db.scalars(select(Deadline).where(Deadline.user_id == user.id))],
+        "study_blocks": [_row(b, BLOCK_FIELDS)
+                         for b in db.scalars(select(StudyBlock).where(StudyBlock.user_id == user.id))],
     }
+
+
+DEADLINE_FIELDS = ("course", "title", "kind", "due_date", "due_time", "end_time", "weight", "hours", "location", "note",
+                   "done")
+BLOCK_FIELDS = ("deadline_id", "day", "start_time", "minutes", "status", "source")
 
 
 def _d(v):
@@ -64,7 +73,7 @@ def import_user(db: DB, user: User, data: dict) -> dict:
     """Replace this account's data with a backup. Runs in one transaction."""
     if data.get("taper_backup") != VERSION:
         raise ValueError("unsupported backup version")
-    for model in (FoodEntry, WeightEntry, DayLog, Habit, CalendarSource, Session):
+    for model in (StudyBlock, Deadline, FoodEntry, WeightEntry, DayLog, Habit, CalendarSource, Session):
         for row in db.scalars(select(model).where(model.user_id == user.id)):
             db.delete(row)
     for p in db.scalars(select(Plan).where(Plan.user_id == user.id)):
@@ -125,5 +134,16 @@ def import_user(db: DB, user: User, data: dict) -> dict:
                       reflection=d.get("reflection"), checks=checks))
     for c in data.get("calendars", []):
         db.add(CalendarSource(user_id=user.id, name=c["name"], url=c["url"], ics=c.get("ics")))
+    deadline_map = {}
+    for d in data.get("deadlines", []):
+        row = Deadline(user_id=user.id, **{k: (_d(d[k]) if k == "due_date" else d.get(k)) for k in DEADLINE_FIELDS})
+        db.add(row)
+        db.flush()
+        deadline_map[d["id"]] = row.id
+    for b in data.get("study_blocks", []):
+        if b.get("deadline_id") in deadline_map:
+            db.add(StudyBlock(user_id=user.id, **{k: (_d(b[k]) if k == "day" else
+                                                     deadline_map[b[k]] if k == "deadline_id" else b.get(k))
+                                                  for k in BLOCK_FIELDS}))
     db.commit()
     return {k: len(data.get(k, [])) for k in ("sessions", "foods", "food_entries", "weights", "day_logs", "habits")}

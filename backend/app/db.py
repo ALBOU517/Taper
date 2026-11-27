@@ -194,6 +194,37 @@ class CalendarSource(Base):
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
+class Deadline(Base):
+    """An exam, assignment or quiz the study planner works toward."""
+    __tablename__ = "deadlines"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    course: Mapped[str] = mapped_column(String(120))
+    title: Mapped[str] = mapped_column(String(160))
+    kind: Mapped[str] = mapped_column(String(12), default="exam")          # exam | assignment | quiz
+    due_date: Mapped[date] = mapped_column(Date, index=True)
+    due_time: Mapped[str] = mapped_column(String(5), default="23:59")      # local "HH:MM"; exam start time
+    end_time: Mapped[Optional[str]] = mapped_column(String(5), nullable=True)   # exams: when it ends
+    weight: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # % of the course grade
+    hours: Mapped[Optional[float]] = mapped_column(Float, nullable=True)   # revision hours wanted (None = estimate)
+    location: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    done: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class StudyBlock(Base):
+    __tablename__ = "study_blocks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    deadline_id: Mapped[int] = mapped_column(ForeignKey("deadlines.id", ondelete="CASCADE"), index=True)
+    day: Mapped[date] = mapped_column(Date, index=True)
+    start_time: Mapped[str] = mapped_column(String(5))
+    minutes: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(10), default="planned")     # planned | done | missed
+    source: Mapped[str] = mapped_column(String(10), default="auto")        # auto | manual
+
+
 def init_db() -> None:
     Base.metadata.create_all(engine)
     add_missing_columns()

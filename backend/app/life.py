@@ -19,7 +19,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from . import foods as F
 from . import services
-from .db import CalendarSource, CnfIndex, DayLog, Food, FoodEntry, Habit, Session, User, WeightEntry
+from .db import CalendarSource, CnfIndex, DayLog, Deadline, Food, FoodEntry, Habit, Session, User, WeightEntry
 from .engine import calendar as C
 from .engine import nutrition as N
 from .engine.constraints import _HEAVY
@@ -31,6 +31,9 @@ SETTINGS_DEFAULTS = {
     "schedule": {"tz": "America/Toronto", "day_start": "06:30", "day_end": "21:30", "buffer_min": 15,
                  "prefer": "evening"},
     "gym_routines": [],
+    # study planner: block length, daily cap, hours of the day, and calendar events you can study during
+    "study": {"block_min": 90, "max_per_day_h": 6, "day_start": "06:00", "day_end": "21:00", "exam_gap_min": 60,
+              "ok_during": ""},
     "levels": {},       # sport -> {stage, progress, assessed, assessed_at, evaluated_through, history}
 }
 MEALS = ("breakfast", "lunch", "dinner", "snack", "training")
@@ -486,6 +489,14 @@ def checklist(db: DB, user: User, d: date, with_history: bool = True) -> dict:
         label = s.title + (f" · {s.start_time}" if s.start_time else "") + f" · {s.minutes} min"
         items.append({"key": f"session:{s.id}", "label": label, "done": s.status == "done", "kind": "training",
                       "auto": True, "session_id": s.id, "sport": s.sport})
+    from . import study
+    names = {x.id: x for x in db.scalars(select(Deadline).where(Deadline.user_id == user.id))}
+    for r in study.blocks_between(db, user, d, d):
+        dd = names.get(r.deadline_id)
+        label = f"Study {dd.course if dd else ''} · {r.start_time} · {r.minutes} min".replace("  ", " ")
+        items.append({"key": f"study:{r.id}", "label": label, "done": r.status == "done", "kind": "study",
+                      "auto": False, "block_id": r.id})
+    items.sort(key=lambda i: (i["kind"] not in ("training", "study"), _clock(i["label"])))
     dl = db.scalar(select(DayLog).where(DayLog.user_id == user.id, DayLog.day == d))
     checks = (dl.checks if dl else {}) or {}
     b, _ = body(db, user, d)
@@ -521,7 +532,17 @@ def checklist(db: DB, user: User, d: date, with_history: bool = True) -> dict:
     return out
 
 
+def _clock(label: str) -> str:
+    import re
+    m = re.search(r"\b(\d{2}:\d{2})\b", label)
+    return m[1] if m else "99:99"
+
+
 def set_check(db: DB, user: User, d: date, key: str, done: bool) -> None:
+    if key.startswith("study:"):
+        from . import study
+        study.set_block_status(db, user, int(key.split(":", 1)[1]), "done" if done else "planned")
+        return
     dl = day_log(db, user, d)
     if key == "food_complete":
         dl.food_complete = done
@@ -564,9 +585,13 @@ async def fetch_calendar(src: CalendarSource) -> None:
     src.last_sync = datetime.now(timezone.utc)
 
 
-def busy_blocks(db: DB, user: User, a: date, b: date) -> tuple[list[C.Busy], list[str]]:
+def busy_blocks(db: DB, user: User, a: date, b: date, include_study: bool = True) -> tuple[list[C.Busy], list[str]]:
+    """Calendar events plus, unless asked not to, Taper's own revision blocks."""
     tz = settings(user)["schedule"]["tz"]
     out, errors = [], []
+    if include_study:
+        from . import study
+        out.extend(study.busy_from_blocks(db, user, a, b))
     for src in db.scalars(select(CalendarSource).where(CalendarSource.user_id == user.id)):
         if not src.ics:
             continue
