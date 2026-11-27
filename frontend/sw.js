@@ -1,6 +1,6 @@
 // Offline-first shell, network-first API (falls back to last good response for bad gym Wi-Fi).
-const SHELL = "taper-shell-v9";
-const API = "taper-api-v9";
+const SHELL = "taper-shell-v10";
+const API = "taper-api-v10";
 const ASSETS = ["./", "index.html", "styles.css", "app.js", "vendor/vue.esm-browser.prod.js", "manifest.webmanifest",
   "fonts/barlow-latin-400-normal.woff2", "fonts/barlow-latin-500-normal.woff2", "fonts/barlow-latin-600-normal.woff2",
   "fonts/barlow-condensed-latin-500-normal.woff2", "fonts/barlow-condensed-latin-600-normal.woff2",
@@ -21,6 +21,10 @@ self.addEventListener("fetch", (e) => {
     }).catch(() => caches.match(e.request)));
     return;
   }
-  e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request)));
+  // app files: newest from the network first (so an update never mixes old CSS with new JS), cache when offline
+  e.respondWith(fetch(e.request, { cache: "no-cache" }).then((res) => {
+    if (res.ok) { const copy = res.clone(); caches.open(SHELL).then((c) => c.put(e.request, copy)); }
+    return res;
+  }).catch(() => caches.match(e.request)));
 });
 self.addEventListener("notificationclick", (e) => { e.notification.close(); e.waitUntil(self.clients.openWindow("./#/today")); });

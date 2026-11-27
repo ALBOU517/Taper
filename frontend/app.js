@@ -721,7 +721,7 @@ const FoodView = {
       await api(`/api/checklist/${day.value}`, { method: "POST", body: { key: "food_complete", done: !n.value.food_complete } }); load();
     };
     const mealTotal = (items) => items.reduce((a, e) => a + e.kcal, 0);
-    return { day, n, adding, shift, del, copyYesterday, toggleComplete, mealTotal, MEAL_LABEL, fmtDay, fmtK, r0, iso };
+    return { day, n, adding, load, shift, del, copyYesterday, toggleComplete, mealTotal, MEAL_LABEL, fmtDay, fmtK, r0, iso };
   },
   template: `
   <div v-if="n">
