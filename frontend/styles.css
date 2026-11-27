@@ -682,3 +682,41 @@ label.btn.disabled { opacity: .45; pointer-events: none; }
 .dl-fig .short { color: var(--bad); font-weight: 600; }
 .dl-form .form-row { margin-bottom: 12px; }
 .study textarea { width: 100%; font-family: var(--mono, monospace); font-size: 0.88rem; }
+
+/* ================================================================ week calendar grid */
+.seg { display: inline-flex; background: var(--surface); border-radius: 99px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: none; padding: 6px 16px; border-radius: 99px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.seg button.on { background: var(--ink); color: var(--paper); }
+.wgrid { background: var(--surface); border-radius: var(--r-lg); padding: 10px 10px 14px; }
+.wg-head, .wg-body { display: grid; grid-template-columns: 46px repeat(7, minmax(0, 1fr)); }
+.wg-head > div { font-family: var(--cond); font-weight: 700; padding: 4px 6px 8px; border-bottom: 2px solid var(--line); display: grid; gap: 3px; align-content: start; }
+.wg-head > div small { font-family: var(--body); font-weight: 400; color: var(--muted); }
+.wg-head > div.today { border-bottom-color: var(--ink); }
+.wg-loose { font-size: 0.72rem; text-align: left; border: 0; border-left: 3px solid var(--sport); background: var(--paper); border-radius: 4px; padding: 2px 5px; cursor: pointer; font-family: var(--body); font-weight: 600; }
+.wg-body { max-height: 70vh; overflow-y: auto; }
+.wg-hours span { display: block; font-size: 0.7rem; color: var(--muted); text-align: right; padding-right: 6px; transform: translateY(-6px); }
+.wg-col { position: relative; border-left: 1px solid var(--line-soft); }
+.wg-col.today { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.wg-line { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line-soft); }
+.wg-now { position: absolute; left: 0; right: 0; border-top: 2px solid var(--bad); z-index: 3; }
+.wg-now::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+.ev { position: absolute; border-radius: 5px; padding: 2px 5px; overflow: hidden; font-size: 0.74rem; line-height: 1.2; cursor: default; z-index: 1; }
+.ev b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev small { display: block; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-busy { background: color-mix(in srgb, var(--muted) 14%, var(--surface)); color: var(--muted); border-left: 3px solid color-mix(in srgb, var(--muted) 45%, transparent); }
+.ev-exam { background: color-mix(in srgb, var(--bad) 18%, var(--surface)); color: var(--ink); border-left-color: var(--bad); }
+.ev-work { background: color-mix(in srgb, var(--muted) 22%, var(--surface)); }
+.ev-study { background: color-mix(in srgb, var(--study) 22%, var(--surface)); border-left: 3px solid var(--study); color: var(--ink); cursor: pointer; z-index: 2; }
+.ev-train { background: color-mix(in srgb, var(--sport) 20%, var(--surface)); border-left: 3px solid var(--sport); color: var(--ink); cursor: pointer; z-index: 2; }
+.ev.done b::before { content: "✓ "; color: var(--good); }
+.ev.missed { opacity: 0.45; }
+.wg-daynav { display: none; }
+@media (max-width: 760px) {
+  .wg-daynav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .wg-head, .wg-body { grid-template-columns: 46px 1fr; }
+  .wg-head > div:not(.sel), .wg-col:not(.sel) { display: none; }
+  .ev { font-size: 0.85rem; }
+}
+.ev.thin { z-index: 0; background: transparent; border-left: 0; border-top: 1px dashed color-mix(in srgb, var(--muted) 50%, transparent); border-radius: 0; padding: 0 4px; text-align: right; }
+.ev.thin b { font-weight: 500; font-size: 0.68rem; }
+@media (max-width: 760px) { .wg-head > div.sel { font-size: 0; padding-bottom: 4px; } .wg-head > div.sel .wg-loose { font-size: 0.8rem; } }
