@@ -26,22 +26,30 @@ def _fold(line: str) -> str:
     return "\r\n ".join(out)
 
 
-def _when(d: date, start: str | None, minutes: int) -> list[str]:
-    """Timed event when the planner picked a slot (floating local time), all-day otherwise."""
+def _when(d: date, start: str | None, minutes: int, tz: str | None = None) -> list[str]:
+    """Timed event when the planner picked a slot, all-day otherwise. With ``tz`` the local time is
+    sent as exact UTC, so every calendar app shows it at the right hour whatever its own time zone
+    (Google treats floating times as UTC on subscribed calendars)."""
     if not start:
         return [f"DTSTART;VALUE=DATE:{d:%Y%m%d}", f"DTEND;VALUE=DATE:{d + timedelta(days=1):%Y%m%d}"]
     h, m = map(int, start.split(":"))
     t0 = datetime(d.year, d.month, d.day, h, m)
-    return [f"DTSTART:{t0:%Y%m%dT%H%M%S}", f"DTEND:{t0 + timedelta(minutes=max(minutes, 5)):%Y%m%dT%H%M%S}"]
+    t1 = t0 + timedelta(minutes=max(minutes, 5))
+    if tz:
+        from zoneinfo import ZoneInfo
+        z = ZoneInfo(tz)
+        a, b = (x.replace(tzinfo=z).astimezone(timezone.utc) for x in (t0, t1))
+        return [f"DTSTART:{a:%Y%m%dT%H%M%SZ}", f"DTEND:{b:%Y%m%dT%H%M%SZ}"]
+    return [f"DTSTART:{t0:%Y%m%dT%H%M%S}", f"DTEND:{t1:%Y%m%dT%H%M%S}"]
 
 
 def build_calendar(sessions: Iterable[dict], name: str = "Taper training", reminder_hour: int = 7,
-                   weekly_targets: dict | None = None, study: Iterable[dict] = ()) -> str:
+                   weekly_targets: dict | None = None, study: Iterable[dict] = (), tz: str | None = None) -> str:
     """``sessions``: dicts with id, day (date), sport, title, dsl, minutes, tss, status."""
     now = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Taper//Training Engine//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", f"X-WR-CALNAME:{_esc(name)}",
-             "REFRESH-INTERVAL;VALUE=DURATION:PT6H", "X-PUBLISHED-TTL:PT6H"]
+             "REFRESH-INTERVAL;VALUE=DURATION:PT6H", "X-PUBLISHED-TTL:PT6H"] + ([f"X-WR-TIMEZONE:{tz}"] if tz else [])
     for s in sessions:
         if s.get("status") == "missed":
             continue
@@ -60,7 +68,7 @@ def build_calendar(sessions: Iterable[dict], name: str = "Taper training", remin
             "BEGIN:VEVENT",
             f"UID:taper-session-{s['id']}@taper.app",
             f"DTSTAMP:{now}",
-            *_when(d, s.get("start_time"), s["minutes"]),
+            *_when(d, s.get("start_time"), s["minutes"], tz),
             f"SUMMARY:{_esc(title)}",
             f"DESCRIPTION:{_esc(desc)}",
             f"CATEGORIES:{s['sport'].upper()}",
@@ -81,7 +89,7 @@ def build_calendar(sessions: Iterable[dict], name: str = "Taper training", remin
             "BEGIN:VEVENT",
             f"UID:taper-study-{b['id']}@taper.app",
             f"DTSTAMP:{now}",
-            *_when(b["day"], b["start_time"], b["minutes"]),
+            *_when(b["day"], b["start_time"], b["minutes"], tz),
             f"SUMMARY:{_esc(title)}",
             f"DESCRIPTION:{_esc(desc)}",
             "CATEGORIES:STUDY",

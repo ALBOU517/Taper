@@ -402,5 +402,6 @@ def calendar(token: str, db: DB = Depends(get_db)):
         blocks.append({"id": b.id, "day": b.day, "start_time": b.start_time, "minutes": b.minutes, "status": b.status,
                        "title": f"{d.course}" if d else "Study",
                        "detail": f"For: {d.title} ({d.due_date:%a %b %d} {d.due_time})" if d else ""})
-    return Response(ics.build_calendar(items, name=f"Taper — {u.name}", study=blocks), media_type="text/calendar",
+    return Response(ics.build_calendar(items, name=f"Taper — {u.name}", study=blocks,
+                                         tz=(u.settings or {}).get("schedule", {}).get("tz") or "America/Toronto"), media_type="text/calendar",
                     headers={"Content-Disposition": 'inline; filename="taper.ics"'})
