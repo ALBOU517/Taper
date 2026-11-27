@@ -199,3 +199,29 @@ def test_ics_times_are_exact_utc():
                                          "status": "planned", "title": "ASD"}], tz="America/Toronto")
     assert "DTSTART:20261127T110000Z" in out and "DTEND:20261127T123000Z" in out
     assert "X-WR-TIMEZONE:America/Toronto" in out
+
+
+def test_off_search_falls_back_and_reads_list_brands():
+    import asyncio
+
+    import httpx
+
+    from app import foods as F
+    hit = {"code": "123", "product_name": "UltraPūr 2%", "brands": ["Lactantia"],
+           "nutriments": {"energy-kcal_100g": 52, "proteins_100g": 3.4}}
+
+    def new_ok(req):
+        return httpx.Response(200, json={"hits": [hit]}) if "search.openfoodfacts" in str(req.url) else httpx.Response(503)
+
+    def new_down(req):
+        if "search.openfoodfacts" in str(req.url):
+            return httpx.Response(503)
+        return httpx.Response(200, json={"products": [{**hit, "brands": "Lactantia,Agropur"}]})
+
+    for handler in (new_ok, new_down):
+        F._cache.clear()
+        async def run(h=handler):
+            async with httpx.AsyncClient(transport=httpx.MockTransport(h)) as c:
+                return await F.off_search(c, "ultrapur")
+        out = asyncio.run(run())
+        assert out[0].name == "UltraPūr 2%" and out[0].brand == "Lactantia"

@@ -412,7 +412,7 @@ const Welcome = {
 
 /* ================================================================ nutrition pieces */
 const MEAL_LABEL = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner", snack: "Snacks", training: "Training fuel" };
-const SOURCE_LABEL = { mine: "My foods & recipes", cnf: "Canadian Nutrient File", off: "Open Food Facts", usda: "USDA FoodData Central", custom: "My foods", recipe: "My recipe" };
+const SOURCE_LABEL = { used: "Foods you've used", mine: "My foods & recipes", cnf: "Canadian Nutrient File", off: "Open Food Facts", usda: "USDA FoodData Central", custom: "My foods", recipe: "My recipe" };
 const LOAD_LABEL = { rest: "Rest day", light: "Light day", moderate: "Moderate day", high: "Big day", very_high: "Very big day" };
 const r0 = (x) => Math.round(x || 0);
 const fmtK = (x) => r0(x).toLocaleString();
@@ -613,7 +613,14 @@ const FoodSearch = {
       } catch { toast("Camera unavailable. Type the barcode instead."); stopScan(); }
     };
     function stopScan() { scan.on = false; stream?.getTracks().forEach((t) => t.stop()); stream = null; }
-    const groups = computed(() => !res.value ? [] : ["mine", "cnf", "off", "usda"].map((k) => ({ k, items: res.value.results[k] || [], status: k === "mine" ? "ok" : res.value.sources[k] })));
+    const groups = computed(() => {
+      if (!res.value) return [];
+      const g = ["mine", "cnf", "off", "usda"].map((k) => ({ k, items: res.value.results[k] || [], status: k === "mine" ? "ok" : res.value.sources[k] }));
+      // foods you've already used that match: always shown first, even when a database is down
+      const used = res.value.recent_matches || [];
+      if (used.length) g.unshift({ k: "used", items: used, status: "ok" });
+      return g.filter((x) => x.k !== "mine" || x.items.length || !used.length);
+    });
     return { q, res, recent, busy, picked, grams, search, pick, per, add, tab, quick, addQuick, custom, addCustom, scan, startScan, stopScan, lookup, groups, MEAL_LABEL, SOURCE_LABEL, r0 };
   },
   template: `
