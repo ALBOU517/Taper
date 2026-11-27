@@ -211,7 +211,11 @@ def test_off_search_falls_back_and_reads_list_brands():
            "nutriments": {"energy-kcal_100g": 52, "proteins_100g": 3.4}}
 
     def new_ok(req):
-        return httpx.Response(200, json={"hits": [hit]}) if "search.openfoodfacts" in str(req.url) else httpx.Response(503)
+        if "search.openfoodfacts" in str(req.url):
+            return httpx.Response(200, json={"hits": [{"code": "123", "product_name": "UltraPūr 2%", "brands": ["xx:Lactantia"]}]})
+        if "/api/v2/search" in str(req.url):
+            return httpx.Response(200, json={"products": [{**hit, "brands": "xx:Lactantia"}]})
+        return httpx.Response(503)
 
     def new_down(req):
         if "search.openfoodfacts" in str(req.url):
@@ -224,4 +228,4 @@ def test_off_search_falls_back_and_reads_list_brands():
             async with httpx.AsyncClient(transport=httpx.MockTransport(h)) as c:
                 return await F.off_search(c, "ultrapur")
         out = asyncio.run(run())
-        assert out[0].name == "UltraPūr 2%" and out[0].brand == "Lactantia"
+        assert out[0].name == "UltraPūr 2%" and out[0].brand == "Lactantia" and out[0].kcal == 52
